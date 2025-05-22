@@ -125,19 +125,17 @@ stages:
     steps:
 
     - script: |
-        echo "Ejecutando Hola Mundo en paralelo:"
-        for i in {1..10}; do
-          (echo "Hola Mundo $i" &) 
-        done
-        wait
+        echo Ejecutando Hola Mundo en paralelo:
+        for /L %%i in (1,1,10) do (
+          start "" cmd /c "echo Hola Mundo %%i"
+        )
       displayName: 'Hola Mundo en paralelo'
 
     - script: |
-        mkdir -p logs
-        for i in {1..10}; do
-          filename="logs/log_$i.txt"
-          date > $filename
-        done
-        echo "Contenido de los archivos:"
-        cat logs/*.txt
+        if not exist logs mkdir logs
+        for /L %%i in (1,1,10) do (
+          echo %DATE% %TIME% > logs\log_%%i.txt
+        )
+        echo Contenido de los archivos:
+        type logs\*.txt
       displayName: 'Crear archivos con fecha'
