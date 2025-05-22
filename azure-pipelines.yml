@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  name: 'SelfHostedAgentPool'  # Tu agente self-hosted
+  name: 'Default'  # Tu agente self-hosted
 
 variables:
   SONARQUBE_HOST_URL: $(SONARQUBE_HOST_URL)
