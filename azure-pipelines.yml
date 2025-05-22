@@ -26,18 +26,19 @@ steps:
     npm ci
   displayName: 'Instalar dependencias'
 
-# Ejecutar análisis SonarQube directamente con el CLI
-- script: |
-    npx sonar-scanner \
-      -Dsonar.projectKey=react-nginx-app \
-      -Dsonar.projectName="React NGINX App" \
-      -Dsonar.sources=src \
-      -Dsonar.exclusions=node_modules/**,build/**,dist/** \
-      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-      -Dsonar.host.url=$(SONARQUBE_HOST_URL) \
-      -Dsonar.login=$(SONARQUBE_TOKEN)
-  displayName: 'Ejecutar análisis SonarQube'
-
+#Run SonarQ
+- task: SonarQubePrepare@7
+  inputs:
+    SonarQube: 'svc-son'
+    scannerMode: 'cli'
+    cliScannerVersion: '7.1.0.488'
+    configMode: 'file'
+- task: SonarQubeAnalyze@7
+  inputs:
+    jdkversion: 'JAVA_HOME_17_X64'
+- task: SonarQubePublish@7
+  inputs:
+    pollingTimeoutSec: '300'
 # Compilar la app de React
 - script: |
     npm run build
