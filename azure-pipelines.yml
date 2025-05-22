@@ -12,105 +12,132 @@ pool:
 variables:
   TAG: '$(Build.BuildId)'
 
-steps:
+stages:
 
-# Instalar Node.js
-- task: NodeTool@0
-  inputs:
-    versionSpec: '18.x'
-  displayName: 'Instalar Node.js'
+# Stage 1: Analyze
+- stage: Analyze
+  displayName: 'SonarQ Analysis'
+  jobs:
+  - job: SonarAnalysis
+    displayName: 'SonarQube Analysis Job'
+    steps:
 
-# Instalar dependencias
-- script: |
-    npm ci
-  displayName: 'Instalar dependencias'
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Instalar Node.js'
 
-# Preparacion de SonarQube
-- task: SonarQubePrepare@7
-  inputs:
-    SonarQube: 'svc-son' 
-    scannerMode: 'Other'
-    configMode: 'manual'
-    extraProperties: |
-      sonar.projectKey=react-nginx-app
-      sonar.projectName=React NGINX App
-      sonar.sources=src
-      sonar.exclusions=node_modules/**,build/**,dist/**
-      sonar.javascript.lcov.reportPaths=coverage/lcov.info
+    - script: npm ci
+      displayName: 'Instalar dependencias'
 
-# Ejecutar analisis - 
-- task: SonarQubeAnalyze@7
-  name: sonarAnalysis
-  inputs:
-    jdkversion: 'JAVA_HOME_17_X64'
-  continueOnError: true
-  displayName: 'Ejecutar analisis SonarQube'
+    - task: SonarQubePrepare@7
+      inputs:
+        SonarQube: 'svc-son'
+        scannerMode: 'Other'
+        configMode: 'manual'
+        extraProperties: |
+          sonar.projectKey=react-nginx-app
+          sonar.projectName=React NGINX App
+          sonar.sources=src
+          sonar.exclusions=node_modules/**,build/**,dist/**
+          sonar.javascript.lcov.reportPaths=coverage/lcov.info
+      displayName: 'Preparar SonarQube'
 
-# Publicar resultados
-- task: SonarQubePublish@7
-  inputs:
-    pollingTimeoutSec: '300'
-  displayName: 'Publicar resultados SonarQube'
+    - task: SonarQubeAnalyze@7
+      name: sonarAnalysis
+      inputs:
+        jdkversion: 'JAVA_HOME_17_X64'
+      continueOnError: true
+      displayName: 'Ejecutar analisis SonarQube'
 
-# Mostrar si el analisis fallo
-- script: echo " El analisis SonarQube fallo. No se compilara la aplicacion."
-  condition: failed('sonarAnalysis')
-  displayName: 'Mensaje: Análisis Fallido'
+    - task: SonarQubePublish@7
+      inputs:
+        pollingTimeoutSec: '300'
+      displayName: 'Publicar resultados SonarQube'
 
-# Compilar si SonarQube fue exitoso
-- script: |
-    echo "Analisis Passed. Compilando aplicacion"
-    npm run build
-  condition: succeeded('sonarAnalysis')
-  displayName: 'Compilar app React (solo si análisis pasa)'
+    - script: echo "El analisis SonarQube fallo. No se compilará la aplicacion."
+      condition: failed()
+      displayName: 'Mensaje: Analisis Fallido'
 
-#Login Registry de Docker
-- task: Docker@2
-  displayName: 'Docker Registry Login'
-  inputs:
-    containerRegistry: 'svc-docker'
-    command: 'login'
-  condition: succeeded('sonarAnalysis')
+# Stage 2: Build (solo si el analisis paso)
+- stage: Build
+  displayName: 'Compilar Aplicacion'
+  dependsOn: Analyze
+  condition: succeeded()
+  jobs:
+  - job: BuildApp
+    displayName: 'Job de Compilacion React'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Instalar Node.js'
 
-# Construir imagen Docker
-- task: Docker@2
-  displayName: 'Construir imagen Docker'
-  inputs:
-    command: build
-    Dockerfile: '**/Dockerfile'
-    tags: |
-      $(IMAGE_NAME):$(TAG)
-      $(IMAGE_NAME):latest
-  condition: succeeded('sonarAnalysis')
+    - script: npm ci
+      displayName: 'Instalar dependencias'
 
-# Subir imagen al Docker Registry
-- task: Docker@2
-  displayName: 'Push imagen Docker'
-  inputs:
-    command: push
-    tags: |
-      $(IMAGE_NAME):$(TAG)
-      $(IMAGE_NAME):latest
-  condition: succeeded('sonarAnalysis')
+    - script: |
+        echo "Analisis exitoso. Compilando aplicacion..."
+        npm run build
+      displayName: 'Compilar app React'
 
-# Hola Mundo paralelo
-- script: |
-    echo "Ejecutando Hola Mundo en paralelo:"
-    for i in {1..10}; do
-      (echo "Hola Mundo $i" &) 
-    done
-    wait
-  displayName: 'Hola Mundo en paralelo'
-  condition: succeeded('sonarAnalysis')
+# Stage 3: Docker Build & Push
+- stage: Docker
+  displayName: 'Docker Build and Push'
+  dependsOn: Build
+  condition: succeeded('Build')
+  jobs:
+  - job: DockerBuildPush
+    displayName: 'Docker Build & Push Job'
+    steps:
 
-# Crear 10 archivos con la fecha y mostrar contenido
-- script: |
-    mkdir -p logs
-    for i in {1..10}; do
-      filename="logs/log_$i.txt"
-      date > $filename
-    done
-    echo "Contenido de los archivos:"
-    cat logs/*.txt
-  displayName: 'Crear archivos con fecha'
-  condition: succeeded('sonarAnalysis')
+    - task: Docker@2
+      displayName: 'Login en Docker Registry'
+      inputs:
+        containerRegistry: 'svc-docker'
+        command: 'login'
+
+    - task: Docker@2
+      displayName: 'Construir imagen Docker'
+      inputs:
+        command: build
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          $(IMAGE_NAME):$(TAG)
+          $(IMAGE_NAME):latest
+
+    - task: Docker@2
+      displayName: 'Push imagen Docker'
+      inputs:
+        command: push
+        tags: |
+          $(IMAGE_NAME):$(TAG)
+          $(IMAGE_NAME):latest
+
+# Stage 4: PostBuild Scripts
+- stage: PostBuild
+  displayName: 'Scripts y Logs'
+  dependsOn: Docker
+  condition: succeeded('Docker')
+  jobs:
+  - job: RunScripts
+    displayName: 'Job de Scripts y Logs'
+    steps:
+
+    - script: |
+        echo "Ejecutando Hola Mundo en paralelo:"
+        for i in {1..10}; do
+          (echo "Hola Mundo $i" &) 
+        done
+        wait
+      displayName: 'Hola Mundo en paralelo'
+
+    - script: |
+        mkdir -p logs
+        for i in {1..10}; do
+          filename="logs/log_$i.txt"
+          date > $filename
+        done
+        echo "Contenido de los archivos:"
+        cat logs/*.txt
+      displayName: 'Crear archivos con fecha'
