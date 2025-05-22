@@ -32,7 +32,13 @@ steps:
     SonarQube: 'svc-son'
     scannerMode: 'cli'
     cliScannerVersion: '7.1.0.488'
-    configMode: 'file'
+    configMode: 'manual'
+    cliProjectKey: 'react-nginx-app'
+    cliProjectName: 'React NGINX App'
+    cliSources: 'src'
+    extraProperties: 
+     sonar.exclusions=node_modules/**,build/**,dist/**
+     sonar.javascript.lcov.reportPaths=coverage/lcov.info
 - task: SonarQubeAnalyze@7
   inputs:
     jdkversion: 'JAVA_HOME_17_X64'
