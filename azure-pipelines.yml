@@ -70,7 +70,7 @@ steps:
   inputs:
     containerRegistry: 'svc-docker'
     command: 'login'
-  condition: succeeded('SonarAnalysis')
+  condition: succeeded('sonarAnalysis')
 
 # Construir imagen Docker
 - task: Docker@2
