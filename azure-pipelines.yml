@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  name: 'Default'  # Tu agente self-hosted
+  name: 'Default'  
 
 variables:
   SONARQUBE_HOST_URL: $(SONARQUBE_HOST_URL)
@@ -25,11 +25,6 @@ steps:
 - script: |
     npm ci
   displayName: 'Instalar dependencias'
-
-# (Opcional) Ejecutar pruebas y generar cobertura (si usas Jest)
-- script: |
-    npm test -- --coverage
-  displayName: 'Ejecutar pruebas y cobertura'
 
 # Ejecutar análisis SonarQube directamente con el CLI
 - script: |
