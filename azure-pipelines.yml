@@ -1,0 +1,49 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  name: 'SelfHostedAgentPool'  # Tu agente self-hosted
+
+variables:
+  SONARQUBE_HOST_URL: $(SONARQUBE_HOST_URL)
+  SONARQUBE_TOKEN: $(SONARQUBE_TOKEN)
+
+steps:
+
+# Instalar Node.js
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'
+  displayName: 'Instalar Node.js'
+
+# Instalar dependencias
+- script: |
+    npm ci
+  displayName: 'Instalar dependencias'
+
+# (Opcional) Ejecutar pruebas y generar cobertura (si usas Jest)
+- script: |
+    npm test -- --coverage
+  displayName: 'Ejecutar pruebas y cobertura'
+
+# Ejecutar análisis SonarQube directamente con el CLI
+- script: |
+    npx sonar-scanner \
+      -Dsonar.projectKey=react-nginx-app \
+      -Dsonar.projectName="React NGINX App" \
+      -Dsonar.sources=src \
+      -Dsonar.exclusions=node_modules/**,build/**,dist/** \
+      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+      -Dsonar.host.url=$(SONARQUBE_HOST_URL) \
+      -Dsonar.login=$(SONARQUBE_TOKEN)
+  displayName: 'Ejecutar análisis SonarQube'
+
+# Compilar la app de React
+- script: |
+    npm run build
+  displayName: 'Compilar app React'
