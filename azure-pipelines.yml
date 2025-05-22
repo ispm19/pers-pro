@@ -10,8 +10,7 @@ pool:
   name: 'Default'  
 
 variables:
-  SONARQUBE_HOST_URL: $(SONARQUBE_HOST_URL)
-  SONARQUBE_TOKEN: $(SONARQUBE_TOKEN)
+  TAG: '$(Build.BuildId)'
 
 steps:
 
@@ -26,11 +25,11 @@ steps:
     npm ci
   displayName: 'Instalar dependencias'
 
-#Run SonarQ
+# Preparacion de SonarQube
 - task: SonarQubePrepare@7
   inputs:
-    SonarQube: 'svc-son'
-    scannerMode: 'Other'  
+    SonarQube: 'svc-son' 
+    scannerMode: 'Other'
     configMode: 'manual'
     extraProperties: |
       sonar.projectKey=react-nginx-app
@@ -38,13 +37,80 @@ steps:
       sonar.sources=src
       sonar.exclusions=node_modules/**,build/**,dist/**
       sonar.javascript.lcov.reportPaths=coverage/lcov.info
+
+# Ejecutar analisis - 
 - task: SonarQubeAnalyze@7
+  name: sonarAnalysis
   inputs:
     jdkversion: 'JAVA_HOME_17_X64'
+  continueOnError: true
+  displayName: 'Ejecutar analisis SonarQube'
+
+# Publicar resultados
 - task: SonarQubePublish@7
   inputs:
     pollingTimeoutSec: '300'
-# Compilar la app de React
+  displayName: 'Publicar resultados SonarQube'
+
+# Mostrar si el analisis fallo
+- script: echo " El analisis SonarQube fallo. No se compilara la aplicacion."
+  condition: failed('sonarAnalysis')
+  displayName: 'Mensaje: Análisis Fallido'
+
+# Compilar si SonarQube fue exitoso
 - script: |
+    echo "Analisis Passed. Compilando aplicacion"
     npm run build
-  displayName: 'Compilar app React'
+  condition: succeeded('sonarAnalysis')
+  displayName: 'Compilar app React (solo si análisis pasa)'
+
+#Login Registry de Docker
+- task: Docker@2
+  displayName: 'Docker Registry Login'
+  inputs:
+    containerRegistry: 'svc-docker'
+    command: 'login'
+  condition: succeeded('SonarAnalysis')
+
+# Construir imagen Docker
+- task: Docker@2
+  displayName: 'Construir imagen Docker'
+  inputs:
+    command: build
+    Dockerfile: '**/Dockerfile'
+    tags: |
+      $(IMAGE_NAME):$(TAG)
+      $(IMAGE_NAME):latest
+  condition: succeeded('sonarAnalysis')
+
+# Subir imagen al Docker Registry
+- task: Docker@2
+  displayName: 'Push imagen Docker'
+  inputs:
+    command: push
+    tags: |
+      $(IMAGE_NAME):$(TAG)
+      $(IMAGE_NAME):latest
+  condition: succeeded('sonarAnalysis')
+
+# Hola Mundo paralelo
+- script: |
+    echo "Ejecutando Hola Mundo en paralelo:"
+    for i in {1..10}; do
+      (echo "Hola Mundo $i" &) 
+    done
+    wait
+  displayName: 'Hola Mundo en paralelo'
+  condition: succeeded('sonarAnalysis')
+
+# Crear 10 archivos con la fecha y mostrar contenido
+- script: |
+    mkdir -p logs
+    for i in {1..10}; do
+      filename="logs/log_$i.txt"
+      date > $filename
+    done
+    echo "Contenido de los archivos:"
+    cat logs/*.txt
+  displayName: 'Crear archivos con fecha'
+  condition: succeeded('sonarAnalysis')
