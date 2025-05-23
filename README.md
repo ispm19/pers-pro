@@ -1,87 +1,81 @@
-## Compose sample application
-### An project deploy React Application with Nginx
-
-Project structure:
-
-```
-├── compose.yaml
-├── Dockerfile
-├── .dockerignore
-├── .nginx
-│   └── nginx.conf
-├── package.json
-├── public
-│   ├── ...
-│   └── robots.txt
-├── README.md
-├── src
-│   ├── ...
-│   └── App.js
-└── yarn.lock
-
-```
-
-[_compose.yaml_](compose.yaml)
-
-```
-services:
-  frontend:
-    build:
-      context: .
-    container_name: frontend
-    ports:
-      - "80:80"
-```
-
-The compose file defines an application with an services `frontend`.
-When deploying the application, docker compose maps port 80 of the frontend service container to port 80 of the host as specified in the file.  
-
-## Deploy with docker compose
-
-```
-$ docker compose up -d
-Building frontend
-Sending build context to Docker daemon   1.49MB
-
-Step 1/17 : FROM node:lts AS development
- ---> 9153ee3e2ced
-Step 2/17 : WORKDIR /app
- ---> Using cache
- ---> a7909d92148a
-Step 3/17 : COPY package.json /app/package.json
- ---> 2e690dfe99b2
-Step 4/17 : COPY package-lock.json /app/package-lock.json
- ---> dd0132803f43
- .....
-Step 16/17 : COPY --from=build /app/build .
- ---> Using cache
- ---> 447488bdf601
-Step 17/17 : ENTRYPOINT ["nginx", "-g", "daemon off;"]
- ---> Using cache
- ---> 6372a67cf86f
-Successfully built 6372a67cf86f
-Successfully tagged react-nginx_frontend:latest
-```
-
+AzureDevops, SonarQube, Docker, Kubernetes (EKS)
 ## Expected result
 
-Listing containers must show containers running and the port mapping as below:
+Requerimientos cumplidos
 
-```
-$ docker ps
+        1. Descarga y configuración inicial:
+        
+        2. Clonación del repositorio y setup de entorno.
+        
+        3. Instalación automática del framework (Node.js / Java / otro) en pipeline si no está presente.
+        
+        4. Análisis con SonarQube:
+                Integración de SonarQube en el pipeline.
+                ![image](https://github.com/user-attachments/assets/ab609acd-094e-469d-9ae5-b59a9fbcfde1)
+                
+                Se contemplan dos escenarios:
 
-CONTAINER ID   IMAGE                  COMMAND                  CREATED              STATUS              PORTS                               NAMES
-b6d00a4974ce   react-nginx_frontend   "nginx -g 'daemon of…"   About a minute ago   Up About a minute   0.0.0.0:80->80/tcp, :::80->80/tcp   frontend
-```
+                        Análisis fallido: el pipeline se detiene.
+        
+                        Análisis exitoso: continúa con compilación.
+        
+        5. Compilación y generación de imagen Docker:
+        
+                Imagen Docker construida en pipeline.
+        
+                Push automático a DockerHub.
+                ![image](https://github.com/user-attachments/assets/31e5cd21-c56a-49bf-a201-ede6bf7a5d7d)
+                
+        6. Ejecución de comandos paralelos:
+        
+                Job paralelo imprime "Hola Mundo" 10 veces.
+        
+                Script Bash/Powershell crea 10 archivos con la fecha actual y los imprime.
+                ![image](https://github.com/user-attachments/assets/09d24ba7-f76b-4350-ba51-aaaf8ece9539)
 
-After the application start, navigate to http://localhost in your browser:
-![page](./output.png)
+        7. Despliegue a Kubernetes (EKS):
+        
+                Aplicación desplegada en clúster EKS.
+        
+        8. Archivos YAML organizados en carpeta /environment.
 
-Stop and remove the containers
+        9. Ingress expone endpoint externo.
 
-```
-$ docker compose down
-Stopping frontend ... done
-Removing frontend ... done
-Removing network react-nginx_default
-```
+.
+├── environment/            # YAML de Kubernetes
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── ingress.yaml
+├── docker/
+│   └── Dockerfile
+├── src/                    # Código fuente
+├── sonar-project.properties
+├── terraform/              
+│   └── main.tf
+└── README.md
+
+Bonus incluidos
+✅ Infraestructura como código: (Revisar Terraform dir)
+
+Creación de clúster Kubernetes con Terraform.
+
+✅ Despliegue con Helm o Kustomize
+
+Uso de Helm para manejar despliegues reutilizables.
+
+✅ Despliegue en nube pública (Revisar environment dir)
+
+EKS (AWS) desplegado desde cero. 
+
+✅ Exposición pública
+
+Ingress configurado con hostname accesible vía Internet. (http://ac62abd3701c04dc2b0e0588467e040a-1482966145.us-east-1.elb.amazonaws.com/)
+
+✅ Metodología DevOps aplicada
+
+Integración con herramientas de calidad, automatización end-to-end.
+(Azure-pipeline.yaml).
+
+
+
+
