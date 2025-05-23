@@ -102,17 +102,19 @@ stages:
       inputs:
         command: build
         Dockerfile: '**/Dockerfile'
+        repository: $(IMAGE_NAME)
         tags: |
-          $(IMAGE_NAME):$(TAG)
-          $(IMAGE_NAME):latest
+          $(TAG)
+          latest
 
     - task: Docker@2
       displayName: 'Push imagen Docker'
       inputs:
         command: push
+        repository: $(IMAGE_NAME)
         tags: |
-          $(IMAGE_NAME):$(TAG)
-          $(IMAGE_NAME):latest
+          $(TAG)
+          latest
 
 # Stage 4: PostBuild Scripts
 - stage: PostBuild
