@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: react-nginx-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: react-nginx
   ports:
