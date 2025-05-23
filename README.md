@@ -50,6 +50,8 @@ Creación de clúster Kubernetes con Terraform.
 ✅ Despliegue con Helm o Kustomize
 
 Uso de Helm para manejar despliegues reutilizables.
+![image](https://github.com/user-attachments/assets/723be291-9860-42cd-8a62-1ef967c976ec)
+
 
 ✅ Despliegue en nube pública (Revisar environment dir)
 ![image](https://github.com/user-attachments/assets/1b60d043-8e1c-4ff3-bd12-7680c9e7def3)
