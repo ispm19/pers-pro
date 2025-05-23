@@ -42,6 +42,7 @@ Requerimientos cumplidos
         9. Ingress expone endpoint externo.
 
 Bonus incluidos
+
 ✅ Infraestructura como código: (Revisar Terraform dir)
 
 Creación de clúster Kubernetes con Terraform.
@@ -51,6 +52,8 @@ Creación de clúster Kubernetes con Terraform.
 Uso de Helm para manejar despliegues reutilizables.
 
 ✅ Despliegue en nube pública (Revisar environment dir)
+![image](https://github.com/user-attachments/assets/1b60d043-8e1c-4ff3-bd12-7680c9e7def3)
+
 
 EKS (AWS) desplegado desde cero. 
 
