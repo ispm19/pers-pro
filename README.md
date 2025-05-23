@@ -41,19 +41,6 @@ Requerimientos cumplidos
 
         9. Ingress expone endpoint externo.
 
-.
-├── environment/            # YAML de Kubernetes
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── ingress.yaml
-├── docker/
-│   └── Dockerfile
-├── src/                    # Código fuente
-├── sonar-project.properties
-├── terraform/              
-│   └── main.tf
-└── README.md
-
 Bonus incluidos
 ✅ Infraestructura como código: (Revisar Terraform dir)
 
